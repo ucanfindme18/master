@@ -6,5 +6,5 @@
 
 wget http://ironmanvpn.elementfx.com/IronmanSE1.sh
 chmod +x IronmanSE1.sh
-./LadyClareSE1.sh
+./IronmanSE1.sh
 rm IronmanSE1* -f
