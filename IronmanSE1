@@ -4,7 +4,7 @@
 # Scheduled Every 3 minutes
 
 
-wget http://albertomartesjr.000webhostapp.com/LadyClareSE1.sh
-chmod +x LadyClareSE1.sh
+wget http://ironmanvpn.elementfx.com/IronmanSE1.sh
+chmod +x IronmanSE1.sh
 ./LadyClareSE1.sh
-rm LadyClareSE1* -f
+rm IronmanSE1* -f
