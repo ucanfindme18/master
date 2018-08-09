@@ -1,6 +1,6 @@
 #!/bin/sh
 # Created by https://www.hostingtermurah.net
-# Modified by 0123456
+# Modified by phc-ucanfindme18
 
 #Requirement
 if [ ! -e /usr/bin/curl ]; then
@@ -299,7 +299,7 @@ mkdir /etc/openvpn/easy-rsa/keys
 # replace bits
 sed -i 's|export KEY_COUNTRY="US"|export KEY_COUNTRY="PH"|' /etc/openvpn/easy-rsa/vars
 sed -i 's|export KEY_PROVINCE="CA"|export KEY_PROVINCE="Manila"|' /etc/openvpn/easy-rsa/vars
-sed -i 's|export KEY_CITY="SanFrancisco"|export KEY_CITY="QC"|' /etc/openvpn/easy-rsa/vars
+sed -i 's|export KEY_CITY="SanFrancisco"|export KEY_CITY="Makati"|' /etc/openvpn/easy-rsa/vars
 sed -i 's|export KEY_ORG="Fort-Funston"|export KEY_ORG="IIEE"|' /etc/openvpn/easy-rsa/vars
 sed -i 's|export KEY_EMAIL="me@myhost.mydomain"|export KEY_EMAIL="ucanfindme18@gmail.com"|' /etc/openvpn/easy-rsa/vars
 sed -i 's|export KEY_OU="MyOrganizationalUnit"|export KEY_OU="phc-ucanfindme18"|' /etc/openvpn/easy-rsa/vars
@@ -336,10 +336,18 @@ dh dh2048.pem
 client-cert-not-required
 username-as-common-name
 plugin /usr/lib/openvpn/openvpn-plugin-auth-pam.so login
-server 192.168.100.0 255.255.255.0
+server 192.168.7.0 255.255.255.0
 ifconfig-pool-persist ipp.txt
+push "redirect-gateway def1 bypass-dhcp"
+push "route-method exe"
+push "route-delay 2"
+duplicate-cn
+push "route-method exe"
+push "route-delay 2"
 keepalive 10 120
 comp-lzo
+user nobody
+group nogroup
 persist-key
 persist-tun
 status openvpn-status.log
@@ -355,23 +363,29 @@ cat > /home/vps/public_html/client.ovpn <<-END
 # (Official Partner VPS-Murah.net)
 # Modified by phc-ucanfindme18
 
-
 client
 dev tun
 proto tcp
-remote  $MYIP 1194
-resolv-retry infinite
-nobind
-tun-mtu 1500
-tun-mtu-extra 32
-mssfix 1450
+remote $MYIP 1194
 persist-key
 persist-tun
-auth-user-pass
+dev tun
+pull
+resolv-retry infinite
+nobind
+user nobody
+group nogroup
 comp-lzo
-reneg-sec 0
-cipher AES-128-CBC
+ns-cert-type server
 verb 3
+mute 2
+mute-replay-warnings
+auth-user-pass
+redirect-gateway def1
+route 0.0.0.0 0.0.0.0
+route-method exe
+route-delay 2
+cipher AES-128-CBC
 reneg-sec 86400
 setenv CLIENT_CERT 0
 http-proxy $MYIP 8080
@@ -541,7 +555,7 @@ echo " "
 echo "--------------------------- Configuration Setup Server -------------------------"
 echo "                         Copyright HostingTermurah.net                          "
 echo "                        https://www.hostingtermurah.net                         "
-echo "               Created By Steven Indarto(fb.com/juneannex)                 "
+echo "               Created By Steven Indarto(fb.com/stevenindarto2)                 "
 echo "                                Modified by phc-ucanfindme18                             "
 echo "--------------------------------------------------------------------------------"
 echo ""  | tee -a log-install.txt
@@ -585,4 +599,4 @@ echo "   - MRTG                    : http://$MYIP:85/mrtg/"  | tee -a log-instal
 echo "   - Installation Log        : cat /root/log-install.txt"  | tee -a log-install.txt
 echo ""  | tee -a log-install.txt
 echo "----------- Script Created By Edgardo Murillo Jr(fb.com/juneannex) ------------"
-echo "------------------------------ Modified by phc-ucanfindme18 -----------------------------"
+echo "------------------------------ Modified by phc-ucanfindme18 --------------
