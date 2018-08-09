@@ -1,3 +1,63 @@
+#!/bin/sh
+# Modified by phc-ucanfindme18
+
+#Requirement
+if [ ! -e /usr/bin/curl ]; then
+    apt-get -y update && apt-get -y upgrade
+	apt-get -y install curl
+fi
+# initializing var
+export DEBIAN_FRONTEND=noninteractive
+OS=`uname -m`;
+MYIP=$(curl -4 icanhazip.com)
+if [ $MYIP = "" ]; then
+   MYIP=`ifconfig | grep 'inet addr:' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | cut -d: -f2 | awk '{ print $1}' | head -1`;
+fi
+MYIP2="s/xxxxxxxxx/$MYIP/g";
+
+# go to root
+cd
+
+# disable ipv6
+echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
+sed -i '$ i\echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6' /etc/rc.local
+
+#Add DNS Server ipv4
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+sed -i '$ i\echo "nameserver 8.8.8.8" > /etc/resolv.conf' /etc/rc.local
+sed -i '$ i\echo "nameserver 8.8.4.4" >> /etc/resolv.conf' /etc/rc.local
+
+# install wget and curl
+apt-get update;apt-get -y install wget curl;
+
+# set time GMT +8
+ln -fs /usr/share/zoneinfo/Asia/Manila /etc/localtime
+
+# set repo
+cat > /etc/apt/sources.list <<END2
+deb http://security.debian.org/ jessie/updates main contrib non-free
+deb-src http://security.debian.org/ jessie/updates main contrib non-free
+deb http://http.us.debian.org/debian jessie main contrib non-free
+deb http://packages.dotdeb.org jessie all
+deb-src http://packages.dotdeb.org jessie all
+END2
+wget "http://www.dotdeb.org/dotdeb.gpg"
+cat dotdeb.gpg | apt-key add -;rm dotdeb.gpg
+
+# remove unused
+apt-get -y --purge remove samba*;
+apt-get -y --purge remove apache2*;
+apt-get -y --purge remove sendmail*;
+apt-get -y --purge remove bind9*;
+apt-get -y purge sendmail*
+apt-get -y remove sendmail*
+
+# update
+apt-get update; apt-get -y upgrade;
+
+
+
 #install OpenVPN
 apt-get -y install openvpn easy-rsa openssl iptables
 cp -r /usr/share/easy-rsa/ /etc/openvpn
@@ -6,7 +66,7 @@ mkdir /etc/openvpn/easy-rsa/keys
 sed -i 's|export KEY_COUNTRY="US"|export KEY_COUNTRY="PH"|' /etc/openvpn/easy-rsa/vars
 sed -i 's|export KEY_PROVINCE="CA"|export KEY_PROVINCE="Manila"|' /etc/openvpn/easy-rsa/vars
 sed -i 's|export KEY_CITY="SanFrancisco"|export KEY_CITY="Makati"|' /etc/openvpn/easy-rsa/vars
-sed -i 's|export KEY_ORG="Fort-Funston"|export KEY_ORG="IIEE"|' /etc/openvpn/easy-rsa/vars
+sed -i 's|export KEY_ORG="Fort-Funston"|export KEY_ORG="edgardomurillojr"|' /etc/openvpn/easy-rsa/vars
 sed -i 's|export KEY_EMAIL="me@myhost.mydomain"|export KEY_EMAIL="ucanfindme18@gmail.com"|' /etc/openvpn/easy-rsa/vars
 sed -i 's|export KEY_OU="MyOrganizationalUnit"|export KEY_OU="phc-ucanfindme18"|' /etc/openvpn/easy-rsa/vars
 sed -i 's|export KEY_NAME="EasyRSA"|export KEY_NAME="phc-ucanfindme18"|' /etc/openvpn/easy-rsa/vars
@@ -44,18 +104,8 @@ username-as-common-name
 plugin /usr/lib/openvpn/openvpn-plugin-auth-pam.so login
 server 192.168.100.0 255.255.255.0
 ifconfig-pool-persist ipp.txt
-push "redirect-gateway def1 bypass-dhcp"
-push "dhcp-option DNS 8.8.8.8"
-push "dhcp-option DNS 8.8.4.4"
-push "route-method exe"
-push "route-delay 2"
-duplicate-cn
-push "route-method exe"
-push "route-delay 2"
 keepalive 10 120
 comp-lzo
-user nobody
-group nogroup
 persist-key
 persist-tun
 status openvpn-status.log
@@ -86,17 +136,18 @@ group nogroup
 comp-lzo
 ns-cert-type server
 verb 3
-mute 2
-mute-replay-warnings
 auth-user-pass
 redirect-gateway def1
-script-security 2
-route 0.0.0.0 0.0.0.0
-route-method exe
 route-delay 2
 cipher AES-128-CBC
 http-proxy $MYIP 8080
-http-proxy-retry
+reneg-sec 86400
+setenv CLIENT_CERT 0
+http-proxy $MYIP 8080
+http-proxy-option CUSTOM-HEADER CONNECT HTTP/1.0
+http-proxy-option CUSTOM-HEADER Host connect.line.me
+http-proxy-option CUSTOM-HEADER X-Forward-Host connect.line.me
+http-proxy-option CUSTOM-HEADER Connection: Keep-Alive
 
 END
 echo '<ca>' >> /home/vps/public_html/client.ovpn
@@ -111,3 +162,41 @@ cd
 /etc/init.d/openvpn restart
 service openvpn start
 service openvpn status
+
+
+# install squid3
+apt-get -y install squid3
+cat > /etc/squid3/squid.conf <<-END
+acl localhost src 127.0.0.1/32 ::1
+acl to_localhost dst 127.0.0.0/8 0.0.0.0/32 ::1
+acl SSL_ports port 443
+acl Safe_ports port 80
+acl Safe_ports port 21
+acl Safe_ports port 443
+acl Safe_ports port 70
+acl Safe_ports port 210
+acl Safe_ports port 1025-65535
+acl Safe_ports port 280
+acl Safe_ports port 488
+acl Safe_ports port 591
+acl Safe_ports port 777
+acl CONNECT method CONNECT
+acl SSH dst xxxxxxxxx-xxxxxxxxx/32
+http_access allow SSH
+http_access allow manager localhost
+http_access deny manager
+http_access allow localhost
+http_access deny all
+http_port 8080
+http_port 8000
+http_port 80
+http_port 3128
+coredump_dir /var/spool/squid3
+refresh_pattern ^ftp: 1440 20% 10080
+refresh_pattern ^gopher: 1440 0% 1440
+refresh_pattern -i (/cgi-bin/|\?) 0 0% 0
+refresh_pattern . 0 20% 4320
+visible_hostname daybreakersx
+END
+sed -i $MYIP2 /etc/squid3/squid.conf;
+service squid3 restart
