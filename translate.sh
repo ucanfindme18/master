@@ -9,7 +9,7 @@ cd ~
 mkdir vpnas
 cd vpnas
 rm -rf *
-wget https://www.dropbox.com/s/rkm0gv0o2icpkd6/translated.tar.gz?dl=1 && tar zxvf translated.tar.gz
+wget https://www.dropbox.com/s/rkm0gv0o2icpkd6/translated.tar.gz?dl=1 && tar zxvf translated.tar.gz?dl=1
 mv controller /home/vps/public_html
 mv asset /home/vps/public_html
 mv view /home/vps/public_html
